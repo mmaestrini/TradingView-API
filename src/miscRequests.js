@@ -557,17 +557,19 @@ module.exports = {
    * @param {number} [chartID] Chart ID
    * @returns {Promise<Drawing[]>} Drawings
    */
-  async getDrawings(layout, symbol = '', credentials = {}, chartID = 1) {
+  async getDrawings(layout, symbol = '', credentials = {}, chartID = '_shared') {
     const chartToken = await module.exports.getChartToken(layout, credentials);
     const creds = credentials.id && credentials.session;
     const session = creds ? credentials.session : null;
     const signature = creds ? credentials.signature : null;
-
+    const host = 'charts-storage.tradingview.com';
+    const path = `/charts-storage/get/layout/${layout}/sources?chart_id=${chartID
+      }&jwt=${chartToken}${symbol ? `&symbol=${symbol}` : ''}`;
+    const headers = { cookie: session ? `sessionid=${session}${signature ? `;sessionid_sign=${signature};` : ''}` : '' };
     const { data } = await request({
-      host: 'charts-storage.tradingview.com',
-      path: `/charts-storage/layout/${layout}/sources?chart_id=${chartID
-      }&jwt=${chartToken}${symbol ? `&symbol=${symbol}` : ''}`,
-      headers: { cookie: session ? `sessionid=${session}${signature ? `;sessionid_sign=${signature};` : ''}` : '' },
+      host,
+      path,
+      headers,
     });
 
     if (!data.payload) throw new Error('Wrong layout, user credentials, or chart id.');
